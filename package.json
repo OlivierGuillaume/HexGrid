@@ -1,0 +1,18 @@
+{
+  "name": "com.olivier-guillaume.hexgrid",
+  "version": "0.0.0",
+  "displayName": "Hexagonal Grid",
+  "description": "A package to make hexagonal tiles maps.",
+  "unity": "2022.3",
+  "keywords": [
+    "tiles",
+    "hexagonal",
+    "grid"
+  ],
+  "author": {
+    "name": "Olivier Guillaume"
+  },
+  "dependencies": {
+    "com.unity.test-framework": "1.0.0"
+  }
+}
