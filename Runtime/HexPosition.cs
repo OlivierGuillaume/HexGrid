@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UIElements;
 
 namespace HexGrid
 {
@@ -8,19 +9,19 @@ namespace HexGrid
     /// Pointy top hexagon grid position
     /// </summary>
     [System.Serializable]
-    public struct HexPosition : IComparable
+    public readonly struct HexPosition : IComparable<HexPosition>
     {
-        public int q;
-        public int r;
+        readonly public int q;
+        readonly public int r;
         public readonly int S => -q - r;
 
         public readonly Vector2Int OffsetCoordinates => new(q + (r - (r & 1)) / 2, r);
-        public readonly Vector3 WorldPosition => new(HORIZ * (q + 0.5f * r), 0f, VERT * r);
+        public readonly Vector3 WorldPosition => new(HORIZ * (q + 0.5f * r), 0f, - VERT * r);
 
-        const float SIZE = 1f;//Lenght of the hexagons sides
-        const float SR3 = 1.7320508075688772935274463415059f;//square root of 3
-        const float HORIZ = SIZE * SR3;//Horizontal distance between to hexes of the same row
-        const float VERT = SIZE * 1.5f;//Vertical distance between two ajacent rows
+        internal const float SIZE = 1f;//Lenght of the hexagons sides
+        internal const float SR3 = 1.7320508075688772935274463415059f;//square root of 3
+        internal const float HORIZ = SIZE * SR3;//Horizontal distance between to hexes of the same row
+        internal const float VERT = SIZE * 1.5f;//Vertical distance between two ajacent rows
 
         #region constructors
 
@@ -34,10 +35,10 @@ namespace HexGrid
         {
         }
 
-        public HexPosition(Vector3 worldPosition)
+        public static HexPosition GetNearestTo(Vector3 worldPosition)
         {
-            float q = (SR3 * worldPosition.x - worldPosition.z) / 3f;
-            float r = 2f / 3f * worldPosition.z;
+            float q = (SR3 * worldPosition.x + worldPosition.z) / 3f;
+            float r = -2f / 3f * worldPosition.z;
             float s = -q - r;
 
             int Q = Mathf.RoundToInt(q);
@@ -57,8 +58,7 @@ namespace HexGrid
                 R = -Q - S;
             }
 
-            this.q = Q;
-            this.r = R;
+            return new(Q, R);
         }
         #endregion
 
@@ -76,9 +76,9 @@ namespace HexGrid
             return (r << 16) + q;
         }
 
-        public int CompareTo(object obj)
+        public int CompareTo(HexPosition other)
         {
-            return GetHashCode()-obj.GetHashCode();
+            return GetHashCode() - other.GetHashCode();
         }
 
         public override bool Equals(object obj)
@@ -118,6 +118,18 @@ namespace HexGrid
             int i = 0;
             int lowerR, higherR;
 
+            if (maxDistance == 1)
+            {
+                //Set it manually so it is clockwise (important for some other scripts)
+                offsets[0] = new HexPosition(1, -1);
+                offsets[1] = new HexPosition(1, 0);
+                offsets[2] = new HexPosition(0, 1);
+                offsets[3] = new HexPosition(-1, 1);
+                offsets[4] = new HexPosition(-1, 0);
+                offsets[5] = new HexPosition(0, -1);
+                return offsets;
+            }
+
             for (int q = -maxDistance; q <= maxDistance; q++)
             {
                 lowerR = Mathf.Max(-maxDistance, -maxDistance - q);
@@ -132,7 +144,9 @@ namespace HexGrid
         }
 
         private static readonly Dictionary<int, HexPosition[]> _neighborsOffsetsCache = new();
-        public readonly HexPosition[] GetNeighbors(int maxDistance = 1)
+
+        public readonly HexPosition[] GetAdjacentHexes() => GetNeighbors(1); 
+        public readonly HexPosition[] GetNeighbors(int maxDistance)
         {
             if (maxDistance <= 0) return new HexPosition[0];
 
@@ -151,6 +165,25 @@ namespace HexGrid
             return neighbors;
         }
 
+        public readonly HexVertex[] GetAjactentVertices()
+        {
+            HexVertex[] adj = new HexVertex[6];
+
+            for (int i = 0; i < 6; i++) adj[i] = new(this, i);
+
+            return adj;
+        }
+
+        public readonly HexEdge[] GetAdjacentEdges()
+        {
+            HexPosition[] adjHexes = GetAdjacentHexes();
+            HexEdge[] adj = new HexEdge[adjHexes.Length];
+
+            for (int i = 0; i < adjHexes.Length; i++) adj[i] = new(this, adjHexes[i]);
+
+            return adj;
+        }
+
         public readonly int DistanceTo(HexPosition other)
         {
             return (other - this).Magnitude;
@@ -159,6 +192,32 @@ namespace HexGrid
         public readonly int Magnitude => (Mathf.Abs(q) + Mathf.Abs(r) + Mathf.Abs(S)) / 2;
         #endregion
 
+        #region Rotation
+        /// <summary>
+        /// Rotate a position around a center by increment of 60°
+        /// </summary>
+        /// <param name="position"></param>
+        /// <param name="center"></param>
+        /// <param name="angleIncrement">Rotate by 60° clockwise multiplied by this number, negative values for counter-clockwise rotation</param>
+        /// <returns></returns>
+        public HexPosition Rotate60Around(HexPosition center = default, int angleIncrement = 1)
+        {
+            int n = angleIncrement % 6;
+            n = (n + 6) % 6;
 
+            HexPosition p = this - center;
+
+            switch (n)
+            {
+                case 0: return this;
+                case 1: return center + new HexPosition(-p.r, -p.S);
+                case 2: return center + new HexPosition(p.S, p.q);
+                case 3: return center - p;
+                case 4: return center + new HexPosition(p.r, p.S);
+                case 5: return center + new HexPosition(-p.S, -p.q);
+                default: return this;
+            }
+        }
+        #endregion
     }
 }
