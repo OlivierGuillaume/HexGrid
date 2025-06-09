@@ -16,6 +16,9 @@ namespace HexGrid
             }
         }
 
+
+        public HexGrid(){}
+
         public HexGrid(TCell[,] offsetGrid, bool createCellForNull = true)
         {
             for (int x = 0; x < offsetGrid.GetLength(0); x++)
@@ -79,6 +82,72 @@ namespace HexGrid
         {
             return cells.Keys.GetEnumerator();
         }
+
+    }
+
+    public class HexGrid<TCell, TEdge, TVertex> : HexGrid<TCell>
+    {
+        private readonly Dictionary<HexEdge, TEdge> edges = new();
+        private readonly Dictionary<HexVertex, TVertex> vertices = new();
+
+        public TEdge this[HexEdge position]
+        {
+            get
+            {
+                edges.TryGetValue(position, out TEdge val);
+
+                return val;
+            }
+
+            set
+            {
+                edges[position] = value;
+            }
+        }
+
+        public HashSet<TEdge> this[ICollection<HexEdge> positions]
+        {
+            get
+            {
+                HashSet<TEdge> results = new();
+                foreach (HexEdge pos in positions)
+                {
+                    results.Add(this[pos]);
+                }
+                return results;
+            }
+        }
+
+        public TVertex this[HexVertex position]
+        {
+            get
+            {
+                vertices.TryGetValue(position, out TVertex val);
+
+                return val;
+            }
+
+            set
+            {
+                vertices[position] = value;
+            }
+        }
+
+        public HashSet<TVertex> this[ICollection<HexVertex> positions]
+        {
+            get
+            {
+                HashSet<TVertex> results = new();
+                foreach (HexVertex pos in positions)
+                {
+                    results.Add(this[pos]);
+                }
+                return results;
+            }
+        }
+
+        public IEnumerator<HexVertex> Vertices => vertices.Keys.GetEnumerator();
+        public IEnumerator<HexEdge> Edges => edges.Keys.GetEnumerator();
 
     }
 }
