@@ -8,7 +8,7 @@ namespace HexGrid
         float[] weights;
         int radius;
 
-        public HexConvolution GaussianSmoothing(int radius, float standardDeviation = 1.57079632679f)
+        public static HexConvolution GaussianSmoothing(int radius, float standardDeviation = 1.57079632679f)
         {
             if(radius < 0) radius = 0;
 
@@ -18,7 +18,7 @@ namespace HexGrid
 
             HexConvolution convolution = new();
             convolution.radius = radius;
-            convolution.weights = new float[radius];
+            convolution.weights = new float[radius+1];
             for (int i = 0; i <= radius; i++)
                 convolution.weights[i] = Profile(i)/sum;
 
@@ -55,32 +55,35 @@ namespace HexGrid
         }
 
 
-        /// <param name="add">A delegate that adds 2 "T" together</param>
-        /// <param name="scale">A delegate that multiply a "T" by a float weight</param>
+        /// <param name="add">A delegate that adds 2 "TOut" together</param>
+        /// <param name="scale">A delegate that multiply a "TOut" by a float weight</param>
+        /// <param name="get">A delegate Get(HexPosition center, TIn othercell) that returns the value that will be used>
         /// <returns></returns>
-        public HexGrid<T> ApplyTo<T>(
-            HexGrid<T> grid,
-            Func<T, T, T> add,
-            Func<T, float, T> scale
+        public HexGrid<TOut> ApplyTo<TIn, TOut>(
+            HexGrid<TIn> grid,
+            Func<TOut, TOut, TOut> add,
+            Func<TOut, float, TOut> scale,
+            Func<HexPosition, TIn, TOut> get
         )
         {
-            HexGrid<T> grid2 = new();
+            HexGrid<TOut> grid2 = new();
 
             foreach (HexPosition pos in grid)
             {
-                T tot = default!;
+                TOut tot = default!;
                 float totWeight = 0f;
                 bool hasValue = false;
 
                 foreach (HexPosition pos2 in pos.GetNeighbors(radius))
                 {
-                    if (!grid.TryGet(pos2, out T value)) continue;
+                    if (!grid.TryGet(pos2, out TIn value)) continue;
 
                     int d = pos2.DistanceTo(pos);
                     float w = weights[Math.Clamp(d, 0, weights.Length - 1)];
                     totWeight += w;
 
-                    tot = hasValue ? add(tot, scale(value, w)) : scale(value, w);
+                    TOut v2 = get(pos, value);
+                    tot = hasValue ? add(tot, scale(v2, w)) : scale(v2, w);
                     hasValue = true;
                 }
 
