@@ -17,6 +17,14 @@ namespace HexGrid
         /// </summary>
         static readonly List<HexPosition> Directions = new HexPosition(0,0).GetAdjacentHexes().ToList();
 
+        public HexEdge(HexPosition[] hexes) : this(hexes[0], hexes[1])
+        {
+            if (hexes.Length != 2)
+            {
+                throw new ArgumentException("Incorrect hexes number used to define a side (must be 2).");
+            }
+        }
+
         public HexEdge(HexPosition hex0, HexPosition hex1)
         {
             HexPosition direction = hex1 - hex0;
@@ -41,6 +49,24 @@ namespace HexGrid
             hash = (EdgeAdjacentHexes[0].GetHashCode() << 2) + directionIndex;
 
         }
+
+        public HexEdge(HexVertex vertex0, HexVertex vertex1) : this(GetOrthogonalHexes(vertex0, vertex1))
+        {
+        }
+
+        private static HexPosition[] GetOrthogonalHexes(HexVertex vertex0, HexVertex vertex1)
+        {
+            var hexes = vertex0.GetAdjacentHexes().ToHashSet();
+            hexes.IntersectWith(vertex1.GetAdjacentHexes().ToHashSet());
+
+            if (hexes.Count != 2)
+            {
+                throw new ArgumentException("Vertices must be adjacent to define a side.");
+            }
+
+            return hexes.ToArray();
+        }
+
 
         /// <summary>
         /// Center of the side in world position

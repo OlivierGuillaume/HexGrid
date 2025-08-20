@@ -146,21 +146,23 @@ namespace HexGrid
         private static readonly Dictionary<int, HexPosition[]> _neighborsOffsetsCache = new();
 
         public readonly HexPosition[] GetAdjacentHexes() => GetNeighbors(1); 
-        public readonly HexPosition[] GetNeighbors(int maxDistance)
+        public readonly HexPosition[] GetNeighbors(int maxDistance, bool includeSelf = false)
         {
-            if (maxDistance <= 0) return new HexPosition[0];
+            if (maxDistance <= 0) return includeSelf ? new HexPosition []{ this } : new HexPosition[0];
 
             if (!_neighborsOffsetsCache.ContainsKey(maxDistance))
                 _neighborsOffsetsCache[maxDistance] = GetNeighborsOffsets(maxDistance);
 
             HexPosition[] offsets = _neighborsOffsetsCache[maxDistance];
 
-            HexPosition[] neighbors = new HexPosition[offsets.Length];
+            HexPosition[] neighbors = new HexPosition[offsets.Length +(includeSelf ? 1 : 0)];
 
             for (int i = 0; i < offsets.Length; i++)
             {
                 neighbors[i] = this + offsets[i];
             }
+
+            if(includeSelf) neighbors[neighbors.Length - 1] = this;
 
             return neighbors;
         }
