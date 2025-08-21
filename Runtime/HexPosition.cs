@@ -186,6 +186,22 @@ namespace HexGrid
             return adj;
         }
 
+        public readonly HexPosition[] GetLineTo(HexPosition other)
+        {
+            int d = DistanceTo(other);
+            HexPosition[] Line = new HexPosition[d+1];
+
+            Vector3 a = WorldPosition;
+            Vector3 b = other.WorldPosition;
+
+            for(int i = 0; i <= d; i++)
+            {
+                Line[i] = HexPosition.GetNearestTo(Vector3.Lerp(a, b, (float)i / (float)d));
+            }
+
+            return Line;
+        }
+
         public readonly int DistanceTo(HexPosition other)
         {
             return (other - this).Magnitude;
