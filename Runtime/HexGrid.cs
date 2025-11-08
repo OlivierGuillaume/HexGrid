@@ -8,7 +8,9 @@ namespace HexGrid
 {
     public class HexGrid<TCell> : IEnumerable<HexPosition>
     {
-        private readonly Dictionary<HexPosition, TCell> cells = new();
+        protected readonly Dictionary<HexPosition, TCell> cells = new();
+
+        public void Clear() => cells.Clear();
 
         public int CellsCount => cells.Count;
 
@@ -49,7 +51,7 @@ namespace HexGrid
             }
         }
 
-        public TCell this[HexPosition position]
+        public virtual TCell this[HexPosition position]
         {
             get
             {

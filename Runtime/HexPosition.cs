@@ -1,3 +1,4 @@
+using Sirenix.Utilities;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -140,12 +141,14 @@ namespace HexGrid
                     offsets[i++] = new HexPosition(q, r);
                 }
             }
+            //offsets.Sort((a,b)=> a.Magnitude-b.Magnitude);
             return offsets;
         }
 
         private static readonly Dictionary<int, HexPosition[]> _neighborsOffsetsCache = new();
 
         public readonly HexPosition[] GetAdjacentHexes() => GetNeighbors(1); 
+
         public readonly HexPosition[] GetNeighbors(int maxDistance, bool includeSelf = false)
         {
             if (maxDistance <= 0) return includeSelf ? new HexPosition []{ this } : new HexPosition[0];
